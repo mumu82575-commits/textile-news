@@ -1,352 +1,46 @@
-import feedparser
-from deep_translator import GoogleTranslator
-from openpyxl import Workbook
-from datetime import datetime
+import requests
+from bs4 import BeautifulSoup
 
 
-translator = GoogleTranslator(
-    source='auto',
-    target='zh-CN'
+url = "https://whattheythink.com/sections/packaging/"
+
+
+headers = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+
+r = requests.get(
+    url,
+    headers=headers
 )
 
 
-sources = [
+print("状态码:", r.status_code)
 
-    ("纺织",
-     "TextileWorld",
-     "https://www.textileworld.com/feed/"),
 
+soup = BeautifulSoup(
+    r.text,
+    "html.parser"
+)
 
-    ("服饰",
-     "ApparelResources",
-     "https://apparelresources.com/feed/"),
 
+titles = []
 
-    ("国际",
-     "BBC",
-     "https://feeds.bbci.co.uk/news/world/rss.xml"),
 
+for h in soup.find_all(["h2", "h3"]):
 
-    ("国际",
-     "NYTimes",
-     "https://rss.nytimes.com/services/xml/rss/nyt/World.xml")
+    text = h.get_text(strip=True)
 
-]
+    if len(text) > 20:
+        titles.append(text)
 
 
-TEXTILE = [
+titles = titles[:10]
 
-'textile',
-'fiber',
-'fibre',
-'fabric',
-'cotton',
-'yarn',
-'weaving',
-'spinning',
-'polyester',
-'viscose',
-'denim'
 
-]
+print("\n抓取结果：\n")
 
 
-PRINT = [
-
-'print',
-'printing',
-'package',
-'packaging',
-'label',
-'labels',
-'ink',
-'offset',
-'flexo',
-'press',
-'carton'
-
-]
-
-
-FASHION = [
-
-'fashion',
-'apparel',
-'garment',
-'clothing',
-'brand',
-'retail',
-'luxury',
-'sportswear',
-'footwear'
-
-]
-
-
-
-textiles=[]
-
-prints=[]
-
-fashions=[]
-
-internationals=[]
-
-
-
-
-for category,name,url in sources:
-
-
-    try:
-
-
-        feed=feedparser.parse(url)
-
-
-
-        for item in feed.entries[:30]:
-
-
-            title=item.title
-
-
-            low=title.lower()
-
-
-            try:
-
-                title_cn=translator.translate(title)
-
-            except:
-
-                title_cn=title
-
-
-
-            news=(
-
-                title_cn,
-
-                title,
-
-                name
-
-            )
-
-
-
-
-            if any(
-
-                x in low
-
-                for x in TEXTILE
-
-            ):
-
-
-                textiles.append(news)
-
-
-
-            elif any(
-
-                x in low
-
-                for x in PRINT
-
-            ):
-
-
-                prints.append(news)
-
-
-
-            elif any(
-
-                x in low
-
-                for x in FASHION
-
-            ):
-
-
-                fashions.append(news)
-
-
-
-
-            else:
-
-
-                internationals.append(news)
-
-
-
-
-    except:
-
-        pass
-
-
-
-
-
-
-textiles=textiles[:4]
-
-prints=prints[:4]
-
-fashions=fashions[:4]
-
-internationals=internationals[:4]
-
-
-
-
-
-today=datetime.now().strftime("%Y-%m-%d")
-
-
-
-wb=Workbook()
-
-ws=wb.active
-
-
-ws.title="日报"
-
-
-
-
-ws.append([
-
-"日期",
-
-"分类",
-
-"中文标题",
-
-"原标题",
-
-"来源"
-
-])
-
-
-
-
-
-for i in textiles:
-
-
-    ws.append([
-
-
-        today,
-
-        "纺织",
-
-        i[0],
-
-        i[1],
-
-        i[2]
-
-
-
-    ])
-
-
-
-
-
-for i in prints:
-
-
-
-    ws.append([
-
-
-
-        today,
-
-        "印刷",
-
-        i[0],
-
-        i[1],
-
-        i[2]
-
-
-    ])
-
-
-
-
-
-for i in fashions:
-
-
-    ws.append([
-
-
-        today,
-
-        "服饰",
-
-        i[0],
-
-        i[1],
-
-        i[2]
-
-
-
-    ])
-
-
-
-
-
-
-for i in internationals:
-
-
-
-    ws.append([
-
-
-        today,
-
-        "国际",
-
-        i[0],
-
-        i[1],
-
-        i[2]
-
-
-
-    ])
-
-
-
-
-
-filename=f"日报_{today}.xlsx"
-
-
-
-wb.save(filename)
-
-
-
-print("日报生成成功")
-print("纺织",len(textiles))
-print("印刷",len(prints))
-print("服饰",len(fashions))
-print("国际",len(internationals))
+for t in titles:
+    print(t)
