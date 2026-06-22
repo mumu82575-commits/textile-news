@@ -1,23 +1,53 @@
-from datetime import datetime
+import requests
+from bs4 import BeautifulSoup
 from openpyxl import Workbook
+from datetime import datetime
 
-wb = Workbook()
 
-ws = wb.active
-ws.title = "新闻"
+url="https://www.fibre2fashion.com/news"
 
-ws['A1'] = "日期"
-ws['B1'] = "标题"
-ws['C1'] = "来源"
+headers={
+"User-Agent":"Mozilla/5.0"
+}
 
-today = datetime.now().strftime("%Y-%m-%d")
+r=requests.get(url,headers=headers)
 
-ws.append([today,
-           "测试新闻",
-           "GitHub Actions"])
+soup=BeautifulSoup(r.text,"html.parser")
 
-filename = f"日报_{today}.xlsx"
+
+titles=[]
+
+
+for h in soup.find_all("h3")[:10]:
+    text=h.get_text(strip=True)
+
+    if text:
+        titles.append(text)
+
+
+
+wb=Workbook()
+
+ws=wb.active
+
+
+ws.append(["日期","标题","来源"])
+
+
+today=datetime.now().strftime("%Y-%m-%d")
+
+
+
+for t in titles:
+
+    ws.append([today,t,"Fibre2Fashion"])
+
+
+
+filename=f"日报_{today}.xlsx"
+
 
 wb.save(filename)
 
-print("Excel创建成功：", filename)
+
+print("完成")
