@@ -3,87 +3,128 @@ from deep_translator import GoogleTranslator
 from openpyxl import Workbook
 from datetime import datetime
 
-# 新闻源
-sources = [
 
-    ("纺织",
-     "Textile World",
-     "https://www.textileworld.com/feed/",
-     4),
-
-    ("印刷",
-     "Packaging Europe",
-     "https://packagingeurope.com/feed/",
-     2),
-
-    ("印刷",
-     "Labels & Labeling",
-     "https://www.labelsandlabeling.com/feed/",
-     2),
-
-    ("服饰",
-     "Apparel Resources",
-     "https://apparelresources.com/feed/",
-     4),
-
-    ("国际",
-     "BBC",
-     "https://feeds.bbci.co.uk/news/world/rss.xml",
-     4)
-
-]
-
-
-# 翻译器
 translator = GoogleTranslator(
     source='auto',
     target='zh-CN'
 )
 
-today = datetime.now().strftime("%Y-%m-%d")
 
-wb = Workbook()
-ws = wb.active
-ws.title = "日报"
+sources = [
 
-ws.append([
-    "日期",
-    "分类",
-    "中文标题",
-    "原标题",
-    "来源"
-])
+    ("纺织",
+     "TextileWorld",
+     "https://www.textileworld.com/feed/"),
 
 
-for category, name, url, limit in sources:
+    ("服饰",
+     "ApparelResources",
+     "https://apparelresources.com/feed/"),
+
+
+    ("国际",
+     "BBC",
+     "https://feeds.bbci.co.uk/news/world/rss.xml"),
+
+
+    ("国际",
+     "NYTimes",
+     "https://rss.nytimes.com/services/xml/rss/nyt/World.xml")
+
+]
+
+
+TEXTILE = [
+
+'textile',
+'fiber',
+'fibre',
+'fabric',
+'cotton',
+'yarn',
+'weaving',
+'spinning',
+'polyester',
+'viscose',
+'denim'
+
+]
+
+
+PRINT = [
+
+'print',
+'printing',
+'package',
+'packaging',
+'label',
+'labels',
+'ink',
+'offset',
+'flexo',
+'press',
+'carton'
+
+]
+
+
+FASHION = [
+
+'fashion',
+'apparel',
+'garment',
+'clothing',
+'brand',
+'retail',
+'luxury',
+'sportswear',
+'footwear'
+
+]
+
+
+
+textiles=[]
+
+prints=[]
+
+fashions=[]
+
+internationals=[]
+
+
+
+
+for category,name,url in sources:
+
 
     try:
 
-        feed = feedparser.parse(url)
 
-        count = 0
-
-        for item in feed.entries:
-
-            if count >= limit:
-                break
+        feed=feedparser.parse(url)
 
 
-            title = item.title
+
+        for item in feed.entries[:30]:
+
+
+            title=item.title
+
+
+            low=title.lower()
 
 
             try:
-                title_cn = translator.translate(title)
+
+                title_cn=translator.translate(title)
 
             except:
-                title_cn = title
+
+                title_cn=title
 
 
-            ws.append([
 
-                today,
-
-                category,
+            news=(
 
                 title_cn,
 
@@ -91,22 +132,221 @@ for category, name, url, limit in sources:
 
                 name
 
-            ])
-
-
-            count += 1
-
-
-    except Exception as e:
-
-        print(name)
-
-        print(e)
+            )
 
 
 
-filename = f"日报_{today}.xlsx"
+
+            if any(
+
+                x in low
+
+                for x in TEXTILE
+
+            ):
+
+
+                textiles.append(news)
+
+
+
+            elif any(
+
+                x in low
+
+                for x in PRINT
+
+            ):
+
+
+                prints.append(news)
+
+
+
+            elif any(
+
+                x in low
+
+                for x in FASHION
+
+            ):
+
+
+                fashions.append(news)
+
+
+
+
+            else:
+
+
+                internationals.append(news)
+
+
+
+
+    except:
+
+        pass
+
+
+
+
+
+
+textiles=textiles[:4]
+
+prints=prints[:4]
+
+fashions=fashions[:4]
+
+internationals=internationals[:4]
+
+
+
+
+
+today=datetime.now().strftime("%Y-%m-%d")
+
+
+
+wb=Workbook()
+
+ws=wb.active
+
+
+ws.title="日报"
+
+
+
+
+ws.append([
+
+"日期",
+
+"分类",
+
+"中文标题",
+
+"原标题",
+
+"来源"
+
+])
+
+
+
+
+
+for i in textiles:
+
+
+    ws.append([
+
+
+        today,
+
+        "纺织",
+
+        i[0],
+
+        i[1],
+
+        i[2]
+
+
+
+    ])
+
+
+
+
+
+for i in prints:
+
+
+
+    ws.append([
+
+
+
+        today,
+
+        "印刷",
+
+        i[0],
+
+        i[1],
+
+        i[2]
+
+
+    ])
+
+
+
+
+
+for i in fashions:
+
+
+    ws.append([
+
+
+        today,
+
+        "服饰",
+
+        i[0],
+
+        i[1],
+
+        i[2]
+
+
+
+    ])
+
+
+
+
+
+
+for i in internationals:
+
+
+
+    ws.append([
+
+
+        today,
+
+        "国际",
+
+        i[0],
+
+        i[1],
+
+        i[2]
+
+
+
+    ])
+
+
+
+
+
+filename=f"日报_{today}.xlsx"
+
+
 
 wb.save(filename)
 
+
+
 print("日报生成成功")
+print("纺织",len(textiles))
+print("印刷",len(prints))
+print("服饰",len(fashions))
+print("国际",len(internationals))
