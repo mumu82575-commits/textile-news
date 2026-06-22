@@ -1,2 +1,3 @@
 openpyxl
 feedparser
+deep-translator
