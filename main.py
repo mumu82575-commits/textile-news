@@ -1,53 +1,38 @@
-import requests
-from bs4 import BeautifulSoup
+import feedparser
 from openpyxl import Workbook
 from datetime import datetime
 
 
-url="https://www.fibre2fashion.com/news"
+rss_url = "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
 
-headers={
-"User-Agent":"Mozilla/5.0"
-}
-
-r=requests.get(url,headers=headers)
-
-soup=BeautifulSoup(r.text,"html.parser")
+feed = feedparser.parse(rss_url)
 
 
-titles=[]
+wb = Workbook()
+
+ws = wb.active
+
+ws.title = "新闻"
 
 
-for h in soup.find_all("h3")[:10]:
-    text=h.get_text(strip=True)
-
-    if text:
-        titles.append(text)
+ws.append(["日期", "标题", "来源"])
 
 
-
-wb=Workbook()
-
-ws=wb.active
+today = datetime.now().strftime("%Y-%m-%d")
 
 
-ws.append(["日期","标题","来源"])
+for item in feed.entries[:10]:
+
+    ws.append([
+        today,
+        item.title,
+        "NYTimes"
+    ])
 
 
-today=datetime.now().strftime("%Y-%m-%d")
-
-
-
-for t in titles:
-
-    ws.append([today,t,"Fibre2Fashion"])
-
-
-
-filename=f"日报_{today}.xlsx"
+filename = f"日报_{today}.xlsx"
 
 
 wb.save(filename)
 
-
-print("完成")
+print("Excel生成成功")
