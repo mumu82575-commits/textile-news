@@ -1,21 +1,24 @@
-name: Textile News Test
+name: Textile News
 
 on:
   workflow_dispatch:
 
-  schedule:
-    - cron: '0 23 * * *'
-
 jobs:
-  test:
+  run-python:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 输出测试信息
-        run: |
-          echo "====================="
-          echo "纺织新闻自动任务启动"
-          echo "当前时间："
-          date
-          echo "GitHub Actions 工作正常"
-          echo "====================="
+
+    - name: 下载代码
+      uses: actions/checkout@v4
+
+
+    - name: 安装Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+
+    - name: 执行程序
+      run: |
+        python main.py
